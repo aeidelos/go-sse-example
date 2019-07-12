@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Event Listener</title>
+</head>
+<body>
+    Listening event:
+    <ul id="event-list">
+    </ul>
+
+<script>
+    var client = new EventSource("/listen")
+    client.onmessage = function (msg) {
+        var ul = document.getElementById("event-list");
+        var li = document.createElement("li");
+        li.appendChild(document.createTextNode(msg.data));
+        ul.appendChild(li);
+    }
+</script>
+</body>
+</html>
