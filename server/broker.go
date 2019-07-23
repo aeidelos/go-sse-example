@@ -1,16 +1,18 @@
 package server
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type Broker struct {
-	Notifier       chan string
-	IncomingClient chan chan string
-	ExitingClient  chan chan string
-	ActiveClient   map[chan string]bool
+	Notifier       chan []byte
+	IncomingClient chan chan []byte
+	ExitingClient  chan chan []byte
+	ActiveClient   map[chan []byte]bool
 }
 
 func (broker *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +22,7 @@ func (broker *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "streaming unsupported", http.StatusInternalServerError)
 		return
 	}
-	messageChan := make(chan string)
+	messageChan := make(chan []byte)
 	broker.IncomingClient <- messageChan
 	notify := w.(http.CloseNotifier).CloseNotify()
 	go func() {
@@ -39,7 +41,14 @@ func (broker *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if !open {
 			break
 		}
-		fmt.Fprintf(w, "data: %s\n\n", msg)
+		var buffer bytes.Buffer
+
+		message := string(msg)
+		if len(message) > 0 {
+			buffer.WriteString(fmt.Sprintf("%s\n", strings.Replace(message, "\n", "\ndata: ", -1)))
+		}
+		buffer.WriteString("\n")
+		fmt.Fprintf(w, "data: %s\n\n", buffer.String())
 		f.Flush()
 	}
 	log.Println("finish http request ", r.URL.Path)
@@ -66,10 +75,10 @@ func (broker *Broker) Listen() {
 
 func NewServer() (broker *Broker) {
 	broker = &Broker{
-		Notifier:       make(chan string),
-		IncomingClient: make(chan chan string),
-		ExitingClient:  make(chan chan string),
-		ActiveClient:   make(map[chan string]bool),
+		Notifier:       make(chan []byte, 1),
+		IncomingClient: make(chan chan []byte),
+		ExitingClient:  make(chan chan []byte),
+		ActiveClient:   make(map[chan []byte]bool),
 	}
 	go broker.Listen()
 	return broker

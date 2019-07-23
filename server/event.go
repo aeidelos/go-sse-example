@@ -20,7 +20,7 @@ func (event *Event) PublishEventHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to parse http body", http.StatusInternalServerError)
 		return
 	}
-	event.broker.Notifier <- string(requestBody)
+	event.broker.Notifier <- requestBody
 	log.Printf("retrieve event : " + string(requestBody))
 	w.Write([]byte("event sent"))
 }

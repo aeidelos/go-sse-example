@@ -15,5 +15,5 @@ func main() {
 	http.Handle("/listen", broker)
 	http.Handle("/", http.HandlerFunc(client.DisplayWebPage))
 	fmt.Println("starting server on port :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8000", nil))
 }
